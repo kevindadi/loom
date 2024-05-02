@@ -16,39 +16,39 @@ const DEFAULT_MAX_BRANCHES: usize = 1_000;
 #[non_exhaustive] // Support adding more fields in the future
 pub struct Builder {
     /// Max number of threads to check as part of the execution.
-    ///
+    /// 执行时要检查的最大线程数
     /// This should be set as low as possible and must be less than
     /// [`MAX_THREADS`](crate::MAX_THREADS).
     pub max_threads: usize,
 
     /// Maximum number of thread switches per permutation.
-    ///
+    /// 每个排列的 最大线程开关数
     /// Defaults to `LOOM_MAX_BRANCHES` environment variable.
     pub max_branches: usize,
 
     /// Maximum number of permutations to explore.
-    ///
+    /// 要check的最大排列数
     /// Defaults to `LOOM_MAX_PERMUTATIONS` environment variable.
     pub max_permutations: Option<usize>,
 
     /// Maximum amount of time to spend on checking
-    ///
+    /// 最大检查时间
     /// Defaults to `LOOM_MAX_DURATION` environment variable.
     pub max_duration: Option<Duration>,
 
     /// Maximum number of thread preemptions to explore
-    ///
+    /// 要check的线程抢占的最大数量
     /// Defaults to `LOOM_MAX_PREEMPTIONS` environment variable.
     pub preemption_bound: Option<usize>,
 
     /// When doing an exhaustive check, uses the file to store and load the
     /// check progress
-    ///
+    /// 当进行穷举检查时，使用该文件存储和加载检查进度
     /// Defaults to `LOOM_CHECKPOINT_FILE` environment variable.
     pub checkpoint_file: Option<PathBuf>,
 
     /// How often to write the checkpoint file
-    ///
+    /// 多久写一次检查点文件
     /// Defaults to `LOOM_CHECKPOINT_INTERVAL` environment variable.
     pub checkpoint_interval: usize,
 
@@ -159,10 +159,12 @@ impl Builder {
         execution.log = self.log;
         execution.location = self.location;
 
+        // 模型里的闭包 -> FnPtr
         let f = Arc::new(f);
 
         let start = Instant::now();
         loop {
+            // 写checkpoint文件
             if i % self.checkpoint_interval == 0 {
                 info!(parent: None, "");
                 info!(
@@ -208,6 +210,7 @@ impl Builder {
             // Create the next iteration's `tracing` span before trying to step to the next
             // execution, as the `Execution` will capture the current span when
             // it's reset.
+            // 在尝试进入下一次执行之前创建下一次迭代的`tracing`span,因为`execution`将在重置时捕获当前span。
             _span = tracing::info_span!(parent: None, "iter", message = i).entered();
             if let Some(next) = execution.step() {
                 execution = next;
@@ -226,6 +229,7 @@ impl Default for Builder {
 }
 
 /// Run all concurrent permutations of the provided closure.
+/// 运行 模型里提供的所有并发排列
 ///
 /// Uses a default [`Builder`] which can be affected by environment variables.
 pub fn model<F>(f: F)

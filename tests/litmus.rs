@@ -2,7 +2,6 @@
 
 use loom::sync::atomic::AtomicUsize;
 use loom::thread;
-
 use std::collections::HashSet;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
@@ -54,6 +53,7 @@ fn store_buffering() {
 
         let a = a.join().unwrap();
         values.lock().unwrap().insert((a, b));
+        println!("{:?} and {:?}", a, b);
     });
     assert!(values_.lock().unwrap().contains(&(0, 0)));
 }

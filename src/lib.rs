@@ -249,24 +249,36 @@
 //! which should allow you to identify how the bug is triggered.
 //!
 //! # Limitations and Caveats
-//!
-//! ## Intrusive Implementation
+//! 局限性和注意事项
+//! ## Intrusive Implementation 侵入性的实现
 //!
 //! Loom works by intercepting all loads, stores, and other concurrency-sensitive operations (like
 //! spawning threads) that may trigger concurrency bugs in an applications. But this interception
 //! is not automatic -- it requires that the code being tested specifically uses the loom
 //! replacement types. Any code that does not use loom's replacement types is invisible to loom,
 //! and thus won't be subject to the loom model's permutation.
+//! Loom的工作原理是拦截所有加载、存储和其他对并发敏感的操作(比如生成线程),
+//! 这些操作可能会在应用程序中触发并发错误.
+//! 但这种拦截不是自动的——它要求被测试的代码专门使用loom替换类型.
+//! 任何不使用loom替换类型的代码对loom是不可见的，因此不会受loom模型的排列影响。
 //!
 //! While it is relatively simple to utilize loom's types in a single crate through the root-level
 //! `#[cfg(loom)] mod sync` approach suggested earlier, more complex use-cases may require the use
 //! of a library that itself uses concurrent constructs like locks and channels. In such cases,
 //! that library must _also_ be augmented to support loom to achieve complete execution coverage.
+//! 虽然通过前面建议的`#[cfg(loom)] mod sync`方法在单个crate中利用loom的类型相对简单,
+//! 但更复杂的用例可能需要使用本身使用并发构造(如锁和通道)的库.
+//! 在这种情况下，该库必须被增强以支持loom以实现完全的执行覆盖.
 //!
 //! Note that loom still works if some concurrent operations are hidden from it (for example, if
 //! you use `std::sync::Arc` instead of `loom::sync::Arc`). It just means that loom won't be able
 //! to reason about the interaction between those operations and the other concurrent operations in
 //! your program, and thus certain executions that are possible in the real world won't be modeled.
+//! 请注意,如果隐藏了一些并发操作,loom仍然可以正常工作
+//! (例如,如果你使用`std::sync::Arc`而不是`loom::sync::Arc`).
+//! 这只是意味着loom无法推理出这些操作和程序中其他并发操作之间的交互,
+//! 因此现实世界中可能的某些执行不会被建模.
+//!
 //!
 //! ## Large Models
 //!
@@ -274,6 +286,8 @@
 //! where **all** possible interleavings are checked. Loom's state reduction algorithms (see
 //! "Implementation" below) significantly reduce the state space that must be explored, but complex
 //! models can still take **significant** time to complete.
+//! 默认情况下,loom会对程序可能的并发执行进行详尽检查,其中所有可能的交叉都会被检查.
+//! Loom的状态约简算法显著地减少了必须探索的状态空间,但复杂的模型仍然需要大量的时间来完成
 //!
 //! To handle such large models in a more reasonable amount of time, you may need to **not** run
 //! an exhaustive check, and instead tell loom to prune out interleavings that are unlikely to
@@ -282,6 +296,12 @@
 //! pre-emptions (where one thread is forcibly stopped and another one runs in its place. **In
 //! practice, setting the thread pre-emption bound to 2 or 3 is enough to catch most bugs** while
 //! significantly reducing the number of possible executions.
+//! 为了在更合理的时间内处理如此大的模型,您可能需要不运行详尽的检查,
+//! 而是告诉loom修剪不太可能揭示额外bug的交叉.
+//! 你可以通过为loom提供线程抢占绑定来实现这一点.
+//! 如果你设置了这样的界限,loom将检查所有可能的执行,
+//! 其中最多包含`n`个线程抢占(其中一个线程被强制停止，另一个线程在其位置运行).
+//! 在实践中,将线程抢占绑定为2或3就足以捕获大多数错误,同时显著减少可能的执行数量。
 //!
 //! To set the thread pre-emption bound, set the `LOOM_MAX_PREEMPTIONS` environment
 //! variable when running tests (or set
@@ -318,6 +338,11 @@
 //! emulate. The same restriction applies to certain reorderings that are possible across different
 //! atomic variables with other memory orderings, and means that there are certain concurrency bugs
 //! that loom cannot catch.
+//! 不幸的是,loom不可能完全模拟宽松内存排序允许的所有交错.
+//! 这是因为宽松的内存排序允许在单个线程中重新排序内存操作
+//! ——B可以在a 之前运行——而a无法模拟.
+//! 同样的限制也适用于不同的原子变量和其他内存顺序可能发生的某些重排序,
+//! 这意味着有些并发错误是loom无法捕捉到的.
 //!
 //! ## Combinatorial Explosion with Many Threads
 //!
@@ -328,11 +353,20 @@
 //! example, if two threads **read** from the same atomic variable, loom does not attempt another
 //! execution given that the order in which two threads read from the same atomic cannot impact the
 //! execution.
+//! 可能的执行交叉的数量随着线程的数量呈指数增长,
+//! 因为必须将每个额外线程的每个可能执行考虑到当前线程的每个可能执行.
+//! Loom通过_equivalent execution elimation_减少状态空间
+//! 在一定程度上缓解了这种情况.例如,如果两个线程从同一个原子变量读取,
+//! 由于两个线程从同一个原子变量读取数据的顺序不会影响执行,
+//! 因此loom不会尝试执行另一个代码
 //!
 //! However, even with equivalent execution elimination, the number of possible executions grows
 //! significantly with each new thread, to the point where checking becomes infeasible. Loom
 //! therefore specifically limits the number of threads it will model (see [`MAX_THREADS`]), and
 //! tailors its implementation to that limit.
+//! 然而,即使使用等价的执行消除,可能执行的数量随着每个新线程的增加而显著增加,
+//! 以至于检查变得不可行的地步.因此,Loom特别限制了它要建模的线程数量
+//! (参见[' MAX_THREADS ']),并将其实现调整为该限制.
 //!
 //! # Implementation
 //!

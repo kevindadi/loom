@@ -44,8 +44,7 @@ pub(crate) struct Id(usize);
 impl Execution {
     /// Create a new execution.
     ///
-    /// This is only called at the start of a fuzz run. The same instance is
-    /// reused across permutations.
+    /// 这只会在模糊测试开始时被调用在各种排列中重用同一个实例
     pub(crate) fn new(
         max_threads: usize,
         max_branches: usize,
