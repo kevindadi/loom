@@ -18,7 +18,7 @@ pub(crate) struct Execution {
 
     pub(crate) lazy_statics: lazy_static::Set,
 
-    /// All loom aware objects part of this execution run.
+    /// 所有loom的aware objects都是运行时的一部分.
     pub(super) objects: object::Store,
 
     /// Maps raw allocations to LeakTrack objects

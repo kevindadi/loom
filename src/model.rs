@@ -82,12 +82,14 @@ impl Builder {
                     .expect("invalid value for `LOOM_CHECKPOINT_INTERVAL`")
             })
             .unwrap_or(20_000);
+        // let checkpoint_interval = 200;
 
         let max_branches = env::var("LOOM_MAX_BRANCHES")
             .map(|v| v.parse().expect("invalid value for `LOOM_MAX_BRANCHES`"))
             .unwrap_or(DEFAULT_MAX_BRANCHES);
 
-        let location = env::var("LOOM_LOCATION").is_ok();
+        // let location = env::var("LOOM_LOCATION").is_ok();
+        let location = true;
 
         let log = env::var("LOOM_LOG").is_ok();
 
@@ -112,6 +114,10 @@ impl Builder {
         let checkpoint_file = env::var("LOOM_CHECKPOINT_FILE")
             .map(|v| v.parse().expect("invalid value for `LOOM_CHECKPOINT_FILE`"))
             .ok();
+        // info!("checkponit_file:{:?}", checkpoint_file);
+        // let checkpoint_file = Some(PathBuf::from(
+        //     "/home/kevin/HUAWEI/loom/checkpoint_file.json",
+        // ));
 
         Builder {
             max_threads: DEFAULT_MAX_THREADS,

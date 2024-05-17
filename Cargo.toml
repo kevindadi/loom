@@ -19,6 +19,7 @@ categories = ["concurrency", "data-structures"]
 rust-version = "1.65"
 
 [features]
+# default = ["checkpoint"]
 default = []
 checkpoint = ["serde", "serde_json"]
 futures = ["pin-utils"]

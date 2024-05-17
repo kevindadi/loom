@@ -14,7 +14,7 @@ fn initial_thread() {
 fn many_joins() {
     loom::model(|| {
         let mut handles = vec![];
-        let mutex = loom::sync::Arc::new(loom::sync::Mutex::new(()));
+        let mutex = loom::sync::Arc::new(loom::sync::Mutex::new(0u32));
         let lock = mutex.lock().unwrap();
 
         for _ in 1..3 {
@@ -23,7 +23,7 @@ fn many_joins() {
                 mutex.lock().unwrap();
             }));
         }
-
+        // *lock += 1;
         std::mem::drop(lock);
 
         for handle in handles.into_iter() {

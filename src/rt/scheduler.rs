@@ -74,15 +74,21 @@ impl Scheduler {
         Self::with_state(|state| state.queued_spawn.push_back(QueuedSpawn { stack_size, f }));
     }
 
+    // 调度器运行模型内闭包, Execution管理线程生命周期
     pub(crate) fn run<F>(&mut self, execution: &mut Execution, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
         let mut threads = Vec::new();
         threads.push(spawn_thread(Box::new(f), None));
+        // threads[0].resume()启动容器中的第一个（也是唯一的）线程,即Model中闭包
         threads[0].resume();
 
         loop {
+            // 这个循环是核心的调度器部分，它不断检查执行状态并管理线程。
+            // if execution.threads.is_complete()检查所有线程是否已经完成
+            // 在所有线程完成后，对每个线程调用resume()以确保它们都已经结束
+            // 然后通过assert!(thread.is_done())确认这一点
             if execution.threads.is_complete() {
                 for thread in &mut threads {
                     thread.resume();
@@ -113,10 +119,12 @@ impl Scheduler {
             execution,
             queued_spawn: &mut queued_spawn,
         });
-
+        // 临时设置线程局部状态
         STATE.set(unsafe { transmute_lt(&state) }, || {
+            // 恢复线程的执行，期间可能通过STATE访问execution和queued_spawn
             thread.resume();
         });
+        // 返回此次tick调用期间收集的所有新线程生成请求
         queued_spawn
     }
 
@@ -132,13 +140,18 @@ impl Scheduler {
     }
 }
 
+// FnOnce转移自由变量所有权
 fn spawn_thread(f: Box<dyn FnOnce()>, stack_size: Option<usize>) -> Thread {
+    // body是一个generator, 无限次产生值的生成器,用于产生无限序列
     let body = move || {
         loop {
+            // yield_产生值并可能接收外部通过set_para传入的新闭包,首次传入的是f
             let f: Option<Option<Box<dyn FnOnce()>>> = generator::yield_(());
 
             if let Some(f) = f {
+                // 再次暂停
                 generator::yield_with(());
+                // 执行此闭包
                 f.unwrap()();
             } else {
                 break;

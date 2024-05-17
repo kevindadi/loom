@@ -1,5 +1,5 @@
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg$))]
 
 //! Loom is a tool for testing concurrent programs.
 //!
