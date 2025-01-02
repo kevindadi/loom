@@ -8,8 +8,11 @@ mod bool;
 pub use self::bool::AtomicBool;
 
 mod int;
-pub use self::int::{AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize};
-pub use self::int::{AtomicU16, AtomicU32, AtomicU64, AtomicU8, AtomicUsize};
+pub use self::int::{AtomicI16, AtomicI32, AtomicI8, AtomicIsize};
+pub use self::int::{AtomicU16, AtomicU32, AtomicU8, AtomicUsize};
+
+#[cfg(target_has_atomic = "64")]
+pub use self::int::{AtomicI64, AtomicU64};
 
 mod ptr;
 pub use self::ptr::AtomicPtr;
@@ -18,6 +21,13 @@ pub use self::ptr::AtomicPtr;
 pub use std::sync::atomic::Ordering;
 
 /// Signals the processor that it is entering a busy-wait spin-loop.
+///
+/// For loom, this is an alias of [`yield_now`] but is provided as a reflection
+/// of the deprecated [`core::sync::atomic::spin_loop_hint`] function. See the
+/// [`yield_now`] documentation for more information on what effect using this
+/// has on loom.
+///
+/// [`yield_now`]: crate::thread::yield_now
 pub fn spin_loop_hint() {
     crate::thread::yield_now();
 }

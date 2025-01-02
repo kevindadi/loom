@@ -208,14 +208,14 @@
 //!
 //! ```console
 //! LOOM_CHECKPOINT_FILE=my_test.json [other env vars] \
-//!     cargo test --test loom_my_struct --release [failing test]
+//!     cargo test --test loom_my_struct --features checkpoint --release [failing test]
 //! ```
 //!
 //! Then this to check that the next permutation indeed triggers the fault:
 //!
 //! ```console
 //! LOOM_CHECKPOINT_INTERVAL=1 LOOM_CHECKPOINT_FILE=my_test.json [other env vars] \
-//!     cargo test --test loom_my_struct --release [failing test]
+//!     cargo test --test loom_my_struct --features checkpoint --release [failing test]
 //! ```
 //!
 //! The test should fail on the first permutation, effectively isolating the failure
@@ -242,7 +242,7 @@
 //!     LOOM_CHECKPOINT_FILE=my_test.json \
 //!     RUSTFLAGS="--cfg loom" \
 //!     [other env vars] \
-//!     cargo test --test loom_my_struct --release [failing test]
+//!     cargo test --test loom_my_struct --features checkpoint --release [failing test]
 //! ```
 //!
 //! This should provide you with a trace of all the concurrency events leading up to the failure,
@@ -293,7 +293,7 @@
 //! an exhaustive check, and instead tell loom to prune out interleavings that are unlikely to
 //! reveal additional bugs. You do this by providing loom with a _thread pre-emption bound_. If you
 //! set such a bound, loom will check all possible executions that include **at most** `n` thread
-//! pre-emptions (where one thread is forcibly stopped and another one runs in its place. **In
+//! pre-emptions where one thread is forcibly stopped and another one runs in its place. **In
 //! practice, setting the thread pre-emption bound to 2 or 3 is enough to catch most bugs** while
 //! significantly reducing the number of possible executions.
 //! 为了在更合理的时间内处理如此大的模型,您可能需要不运行详尽的检查,

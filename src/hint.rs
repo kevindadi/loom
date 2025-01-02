@@ -1,6 +1,12 @@
 //! Mocked versions of [`std::hint`] functions.
 
 /// Signals the processor that it is entering a busy-wait spin-loop.
+///
+/// For loom, this is an alias of [`yield_now`] but is provided as a reflection
+/// of the [`core::hint::spin_loop`] function. See the [`yield_now`]
+/// documentation for more information on what effect this has.
+///
+/// [`yield_now`]: crate::thread::yield_now
 pub fn spin_loop() {
     crate::sync::atomic::spin_loop_hint();
 }
@@ -20,7 +26,7 @@ pub fn spin_loop() {
 /// simulated version of [`std::hint::unreachable_unchecked`], which is unsafe.
 ///
 /// See [the documentation for
-/// `std::hint::unreachable_unchecked`](`std::hint::unreachable_unchecked#Safety)
+/// `std::hint::unreachable_unchecked`](std::hint::unreachable_unchecked#Safety)
 /// for safety details.
 #[track_caller]
 pub unsafe fn unreachable_unchecked() -> ! {
